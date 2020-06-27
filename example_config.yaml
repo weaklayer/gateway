@@ -1,0 +1,29 @@
+# This example config is in yaml because it supports comments. 
+# Other file formats (e.g. json) are allowed though. Check "weaklayer-gateway server --help" for details.
+sensor:
+  api:
+    # host that the sensor api will bind to
+    host: localhost
+    # port that the sensor api will bind to
+    port: 8080
+  token:
+    # How long issued tokens will be valid for in microseconds (28 days here)
+    duration: 2419200000000
+    # token signing secrets. generate them with "weaklayer-gateway secret"
+    secrets:
+      # REQUIRED: the current secret is used to issue new tokens
+      current: jZAcBYO3EussMYp/GtfAx+luMZd17BQX3lgLxCGTLBY47pR2glLuC4XdUlIe70O19Uu4Yy5zqzH7aIbVQbl7cw==
+      # past secrets are not used for issuing tokens but the server will accept tokens created with them
+      past:
+        - sQBc60569Z4mcf0Idf6OIu+u+Ht+vjz9rqQDx7/mdHUKoMWcFpvfcHRA3Ta5yB1HlHsIRkRajLtdLFmRgpwtiQ==
+        - zAVlcn/qje8jAjL6HWyMZrKiKuYgLIWfVn4uHZA2KaPLbQWCII9wymJe+WPmAph2Qbau5pYDPXAzjVfYo2pU6Q==
+  install:
+    # verfifiers are used to verify the keys that sensors provide on installation requests
+    # you can specify more than one verifier for a given group
+    # not strictly required, but sensors won't be able to install without a verifier here
+    verifiers:
+      -
+        group: 68886d61-572b-41a5-8edd-93a564fb5ba3
+        salt: oWrccA==
+        hash: bAW4dciXby0vAAhqHDebxsLioy6H3eYzGqvL8CMRhh0=
+        checksum: fhpiskuymKjvsyRKJ/U9ohdKRDpgft4x/Exn/zHM1zs=

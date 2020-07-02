@@ -20,41 +20,19 @@
 package cmd
 
 import (
-	"fmt"
+	"testing"
 
 	"github.com/spf13/cobra"
 )
 
-var rootCmd = &cobra.Command{
-	Use:   "weaklayer-gateway",
-	Short: "Weaklayer is a software system for browser detection and response",
-	Long: `
-Welcome to Weaklayer Gateway
-This program contains the Weaklayer Gateway Server and associated admin utilities
-More information and documentation at https://weaklayer.com
-`,
-	RunE: rootCmdRun,
+var rC = &cobra.Command{
+	Use:   "root",
+	Short: "test",
 }
 
-func rootCmdRun(cmd *cobra.Command, args []string) error {
-
-	message := `
-Use "weaklayer-gateway help" to display usage information
-`
-
-	printedBytes, err := fmt.Println(message)
+func TestRootRun(t *testing.T) {
+	err := rootCmdRun(rC, make([]string, 0))
 	if err != nil {
-		return fmt.Errorf("Failed to display message: %w", err)
+		t.Fatalf("Root command execution failed: %v", err)
 	}
-
-	if printedBytes < len(message) {
-		return fmt.Errorf("Failed to display entire message")
-	}
-
-	return nil
-}
-
-// Execute is the main entry point for this program
-func Execute() error {
-	return rootCmd.Execute()
 }

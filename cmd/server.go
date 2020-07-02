@@ -154,7 +154,7 @@ func serverCmdRun(cmd *cobra.Command, args []string) error {
 	if configFilePath != "" {
 		viper.SetConfigFile(configFilePath)
 	} else {
-		return fmt.Errorf("Must specify a config file")
+		return fmt.Errorf("Must specify a config file with --config")
 	}
 
 	viper.SetEnvPrefix("WEAKLAYER")
@@ -179,7 +179,7 @@ func serverCmdRun(cmd *cobra.Command, args []string) error {
 	// we get the added bonus now of being able to use json schema validation
 	mergedConfigBytes, err := json.Marshal(mergedConfig)
 	if err != nil {
-		return fmt.Errorf("Failed to convert config into desired format: %w", err)
+		return fmt.Errorf("Failed to convert config into normalized format: %w", err)
 	}
 
 	err = validateConfigJSON(mergedConfigBytes)
@@ -190,7 +190,7 @@ func serverCmdRun(cmd *cobra.Command, args []string) error {
 	var finalConfig server.Config
 	err = json.Unmarshal(mergedConfigBytes, &finalConfig)
 	if err != nil {
-		return fmt.Errorf("Failed to convert config into desired format: %w", err)
+		return fmt.Errorf("Failed to convert config into normalized format: %w", err)
 	}
 
 	err = validateConfigStruct(finalConfig)

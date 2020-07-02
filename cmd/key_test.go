@@ -20,41 +20,36 @@
 package cmd
 
 import (
-	"fmt"
+	"testing"
 
 	"github.com/spf13/cobra"
 )
 
-var rootCmd = &cobra.Command{
-	Use:   "weaklayer-gateway",
-	Short: "Weaklayer is a software system for browser detection and response",
-	Long: `
-Welcome to Weaklayer Gateway
-This program contains the Weaklayer Gateway Server and associated admin utilities
-More information and documentation at https://weaklayer.com
-`,
-	RunE: rootCmdRun,
+var kC = &cobra.Command{
+	Use:   "key",
+	Short: "test",
 }
 
-func rootCmdRun(cmd *cobra.Command, args []string) error {
-
-	message := `
-Use "weaklayer-gateway help" to display usage information
-`
-
-	printedBytes, err := fmt.Println(message)
+func TestGoodUUID(t *testing.T) {
+	groupArg = "0c805482-41b5-4ed3-a425-ff2694498293"
+	err := keyCmdRun(kC, make([]string, 0))
 	if err != nil {
-		return fmt.Errorf("Failed to display message: %w", err)
+		t.Fatalf("Key command execution failed with supplied UUID: %v", err)
 	}
-
-	if printedBytes < len(message) {
-		return fmt.Errorf("Failed to display entire message")
-	}
-
-	return nil
 }
 
-// Execute is the main entry point for this program
-func Execute() error {
-	return rootCmd.Execute()
+func TestBadUUID(t *testing.T) {
+	groupArg = "0c805482-41b5-4ed3-a425-f94498293"
+	err := keyCmdRun(kC, make([]string, 0))
+	if err == nil {
+		t.Fatalf("Key command execution succeed with bad UUID")
+	}
+}
+
+func TestNoUUID(t *testing.T) {
+	groupArg = defaultGroupArg
+	err := keyCmdRun(kC, make([]string, 0))
+	if err != nil {
+		t.Fatalf("Key command execution failed with no supplied UUID: %v", err)
+	}
 }

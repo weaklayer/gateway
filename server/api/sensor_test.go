@@ -158,3 +158,29 @@ func TestInstallAndEvents(t *testing.T) {
 		t.Fatalf("Install request failed with status code %d", responseRecorder.Code)
 	}
 }
+
+func TestDisplayLicense(t *testing.T) {
+	sensorAPI := SensorAPI{}
+
+	request, err := http.NewRequest("GET", "/index", bytes.NewReader(make([]byte, 0)))
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+
+	responseRecorder := httptest.NewRecorder()
+	handler := http.HandlerFunc(sensorAPI.ServeHTTP)
+	handler.ServeHTTP(responseRecorder, request)
+
+	if responseRecorder.Code != http.StatusOK {
+		t.Fatalf("License get request failed with status code %d", responseRecorder.Code)
+	}
+
+	body := string(responseRecorder.Body.Bytes())
+	if !strings.Contains(body, "GNU") {
+		t.Fatalf("License content did not reference the GNU")
+	}
+
+	if !strings.Contains(body, "AGPL") {
+		t.Fatalf("License content did not reference the AGPL")
+	}
+}

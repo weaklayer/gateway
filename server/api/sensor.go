@@ -23,7 +23,7 @@ import (
 	"net/http"
 )
 
-var lincensePaths = map[string]struct{}{"": {}, "/": {}, "/index": {}, "/index.html": {}, "/index.txt": {}, "/license": {}, "/license.html": {}, "/license.txt": {}}
+var lincensePaths = map[string]struct{}{"": {}, "/": {}, "/index": {}, "/index/": {}, "/index.html": {}, "/license": {}, "/license/": {}, "/license.html": {}}
 
 // SensorAPI is the root HTTP Handler for the sensor API
 type SensorAPI struct {

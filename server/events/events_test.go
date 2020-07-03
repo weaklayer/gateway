@@ -26,7 +26,7 @@ import (
 	"github.com/weaklayer/gateway/common/auth"
 )
 
-func TestValidPageLoadEvent(t *testing.T) {
+func TestWindowLocationEvent(t *testing.T) {
 	const validWindowLocationEvent = `{
 		"type": "WindowLocation",
 		"time": 45678,
@@ -41,7 +41,27 @@ func TestValidPageLoadEvent(t *testing.T) {
 
 	event := testValidParseEvent(t, validWindowLocationEvent)
 	if event.GetType() != WindowLocation {
-		t.Fatalf("Parsed Page Load event as %s", event.GetType())
+		t.Fatalf("Parsed WindowLocation event as %s", event.GetType())
+	}
+
+	if event.GetTime() != 45678 {
+		t.Fatalf("Event time didn't match")
+	}
+}
+
+func TestWindowEvent(t *testing.T) {
+	const validWindowEvent = `{
+		"type": "Window",
+		"time": 45678
+	}`
+
+	event := testValidParseEvent(t, validWindowEvent)
+	if event.GetType() != Window {
+		t.Fatalf("Window event as %s", event.GetType())
+	}
+
+	if event.GetTime() != 45678 {
+		t.Fatalf("Event time didn't match")
 	}
 }
 
@@ -59,6 +79,47 @@ func TestValidUnknownEvent(t *testing.T) {
 	event := testValidParseEvent(t, validUnknownEvent)
 	if event.GetType() != Unknown {
 		t.Fatalf("Parsed Unknown event as %s", event.GetType())
+	}
+
+	if event.GetTime() != 45678452345 {
+		t.Fatalf("Event time didn't match")
+	}
+}
+
+func TestInstallEvent(t *testing.T) {
+	sensor, err := uuid.NewRandom()
+	if err != nil {
+		t.Fatalf("Failed to generate UUID: %v", err)
+	}
+	group, err := uuid.NewRandom()
+	if err != nil {
+		t.Fatalf("Failed to generate UUID: %v", err)
+	}
+
+	installEvent := &InstallEvent{
+		SensorEvent{
+			Sensor: sensor,
+			Group:  group,
+			Time:   45678,
+			Type:   Install,
+		},
+		"kjsahdfkajsd",
+	}
+
+	if !auth.UUIDEquals(sensor, installEvent.GetSensor()) {
+		t.Fatalf("Sensor UUIDs don't match")
+	}
+
+	if !auth.UUIDEquals(group, installEvent.GetGroup()) {
+		t.Fatalf("Group UUIDs don't match")
+	}
+
+	if installEvent.GetType() != Install {
+		t.Fatalf("Incorrect event type")
+	}
+
+	if installEvent.GetTime() != 45678 {
+		t.Fatalf("Event time didn't match")
 	}
 }
 

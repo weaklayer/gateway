@@ -20,35 +20,34 @@
 package processing
 
 import (
-	"encoding/json"
-	"fmt"
+	"testing"
 
+	"github.com/google/uuid"
 	"github.com/weaklayer/gateway/server/events"
 )
 
-// EventProcessor takes events and sends them to their next destinations
-type EventProcessor struct{}
+func TestProcessing(t *testing.T) {
 
-// Consume is the entry point for processing events.
-// This process is asynchronous as there are multiple events and multiple destinations
-func (eventProcessor EventProcessor) Consume(events []events.Event) error {
-	for _, event := range events {
-		serializedBytes, err := json.Marshal(event)
-		if err != nil {
-			return err
-		}
-
-		s := string(serializedBytes)
-
-		n, err := fmt.Println(s)
-		if err != nil {
-			return err
-		}
-
-		if n < len(s) {
-			return fmt.Errorf("Failed to print all event bytes")
-		}
+	sensor, err := uuid.NewRandom()
+	if err != nil {
+		t.Fatalf("Failed to generate UUID: %v", err)
+	}
+	group, err := uuid.NewRandom()
+	if err != nil {
+		t.Fatalf("Failed to generate UUID: %v", err)
 	}
 
-	return nil
+	processor := EventProcessor{}
+
+	event := events.SensorEvent{
+		Type:   events.Unknown,
+		Time:   1,
+		Sensor: sensor,
+		Group:  group,
+	}
+
+	err = processor.Consume([]events.Event{event})
+	if err != nil {
+		t.Fatalf("Error consuming event: %v", err)
+	}
 }

@@ -1,5 +1,3 @@
-# This example config is in yaml because it supports comments. 
-# Other file formats (e.g. json) are allowed though. Check "weaklayer-gateway server --help" for details.
 sensor:
   api:
     # host that the sensor api will bind to
@@ -11,7 +9,7 @@ sensor:
     duration: 2419200000000
     # token signing secrets. generate them with "weaklayer-gateway secret"
     secrets:
-      # REQUIRED: the current secret is used to issue new tokens
+      # REQUIRED: the current secret is used to issue and verify tokens
       current: jZAcBYO3EussMYp/GtfAx+luMZd17BQX3lgLxCGTLBY47pR2glLuC4XdUlIe70O19Uu4Yy5zqzH7aIbVQbl7cw==
       # past secrets are not used for issuing tokens but the server will accept tokens created with them
       past:
@@ -20,7 +18,6 @@ sensor:
   install:
     # verfifiers are used to verify the keys that sensors provide on installation requests
     # you can specify more than one verifier for a given group
-    # not strictly required, but sensors won't be able to install without a verifier here
     verifiers:
       -
         group: 68886d61-572b-41a5-8edd-93a564fb5ba3

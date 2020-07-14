@@ -4,6 +4,11 @@ sensor:
     host: localhost
     # port that the sensor api will bind to
     port: 8080
+    # uncomment this section to enable https with example self signed crypt material
+    # https:
+    #   certificate: server/test-crypt/example_cert.pem
+    #   key: server/test-crypt/example_key_encrypted.pem
+    #   password: examplekeypassword
   token:
     # How long issued tokens will be valid for in microseconds (28 days here)
     duration: 2419200000000

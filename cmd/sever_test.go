@@ -34,7 +34,7 @@ func TestServerNoConfig(t *testing.T) {
 	configFilePath = ""
 	err := serverCmdRun(serverC, make([]string, 0))
 	if err == nil {
-		t.Fatalf("Secret command did not produce error")
+		t.Fatalf("Server command did not produce error")
 	}
 	t.Logf("%v", err)
 }
@@ -43,7 +43,7 @@ func TestServerBadConfigPath(t *testing.T) {
 	configFilePath = "test-configs/doesnt_exist.yaml"
 	err := serverCmdRun(serverC, make([]string, 0))
 	if err == nil {
-		t.Fatalf("Secret command did not produce error")
+		t.Fatalf("Server command did not produce error")
 	}
 	t.Logf("%v", err)
 }
@@ -52,7 +52,7 @@ func TestServerBadYamlConfig(t *testing.T) {
 	configFilePath = "test-configs/invalid_yaml.yaml"
 	err := serverCmdRun(serverC, make([]string, 0))
 	if err == nil {
-		t.Fatalf("Secret command did not produce error")
+		t.Fatalf("Server command did not produce error")
 	}
 	t.Logf("%v", err)
 }
@@ -61,7 +61,7 @@ func TestServerMissingTokenSecretConfig(t *testing.T) {
 	configFilePath = "test-configs/missing_current_secret.yaml"
 	err := serverCmdRun(serverC, make([]string, 0))
 	if err == nil {
-		t.Fatalf("Secret command did not produce error")
+		t.Fatalf("Server command did not produce error")
 	}
 	t.Logf("%v", err)
 }
@@ -70,7 +70,7 @@ func TestServerBadTokenSecretConfig(t *testing.T) {
 	configFilePath = "test-configs/bad_current_secret.yaml"
 	err := serverCmdRun(serverC, make([]string, 0))
 	if err == nil {
-		t.Fatalf("Secret command did not produce error")
+		t.Fatalf("Server command did not produce error")
 	}
 	t.Logf("%v", err)
 }
@@ -79,7 +79,16 @@ func TestServerBadInstallKeyChecksumsConfig(t *testing.T) {
 	configFilePath = "test-configs/bad_checksum.yaml"
 	err := serverCmdRun(serverC, make([]string, 0))
 	if err == nil {
-		t.Fatalf("Secret command did not produce error")
+		t.Fatalf("Server command did not produce error")
+	}
+	t.Logf("%v", err)
+}
+
+func TestServerBadHttpsConfig(t *testing.T) {
+	configFilePath = "test-configs/bad_https.yaml"
+	err := serverCmdRun(serverC, make([]string, 0))
+	if err == nil {
+		t.Fatalf("Server command did not produce error")
 	}
 	t.Logf("%v", err)
 }

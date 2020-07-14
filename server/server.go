@@ -21,6 +21,7 @@ package server
 
 import (
 	"fmt"
+	stdlog "log"
 	"net/http"
 
 	"github.com/rs/zerolog/log"
@@ -35,8 +36,13 @@ import (
 type Config struct {
 	Sensor struct {
 		API struct {
-			Host string
-			Port int32
+			Host  string
+			Port  int32
+			HTTPS struct {
+				Certificate string
+				Key         string
+				Password    string
+			}
 		}
 		Token struct {
 			Duration int64 // this is the number of microseconds new tokens are valid for
@@ -74,10 +80,29 @@ func Run(config Config) error {
 		InstallHandler: installAPI,
 	}
 
-	s := &http.Server{
-		Addr:    fmt.Sprintf("%s:%d", config.Sensor.API.Host, config.Sensor.API.Port),
-		Handler: sensorAPI,
+	var listenErr error
+	if useTLS(config.Sensor.API.HTTPS.Certificate, config.Sensor.API.HTTPS.Key) {
+		tlsConfig, err := getTLSConfig(config.Sensor.API.HTTPS.Certificate, config.Sensor.API.HTTPS.Key, config.Sensor.API.HTTPS.Password)
+		if err != nil {
+			return fmt.Errorf("Failed to produce TLS config: %w", err)
+		}
+
+		s := &http.Server{
+			ErrorLog:  stdlog.New(log.Logger, "", 0),
+			Addr:      fmt.Sprintf("%s:%d", config.Sensor.API.Host, config.Sensor.API.Port),
+			Handler:   sensorAPI,
+			TLSConfig: tlsConfig,
+		}
+
+		listenErr = s.ListenAndServeTLS("", "")
+	} else {
+		s := &http.Server{
+			ErrorLog: stdlog.New(log.Logger, "", 0),
+			Addr:     fmt.Sprintf("%s:%d", config.Sensor.API.Host, config.Sensor.API.Port),
+			Handler:  sensorAPI,
+		}
+		listenErr = s.ListenAndServe()
 	}
 
-	return s.ListenAndServe()
+	return listenErr
 }

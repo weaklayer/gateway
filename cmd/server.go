@@ -35,8 +35,13 @@ import (
 type stringsConfig struct {
 	Sensor struct {
 		API struct {
-			Host string `json:"host,omitempty"`
-			Port int32  `json:"port,omitempty"`
+			Host  string `json:"host,omitempty"`
+			Port  int32  `json:"port,omitempty"`
+			HTTPS struct {
+				Certificate string `json:"certificate,omitempty"`
+				Key         string `json:"key,omitempty"`
+				Password    string `json:"password,omitempty"`
+			} `json:"https,omitempty"`
 		} `json:"api,omitempty"`
 		Token struct {
 			Duration int64 `json:"duration,omitempty"`
@@ -127,6 +132,27 @@ var configJSONSchema = fmt.Sprintf(`
 							"maximum": 65535,
 							"example": 8080,
 							"description": "The port that the sensor API listens on."
+						},
+						"https": {
+							"type": "object",
+							"description": "Config values for enabling https on the sensor api.",
+							"properties": {
+								"certificate": {
+									"type": "string",
+									"example": "/home/weaklayer/certificate.pem",
+									"description": "Path to a TLS certificate (PEM format)"
+								},
+								"key": {
+									"type": "string",
+									"example": "/home/weaklayer/key.pem",
+									"description": "Path to the TLS certificate private key (PEM format)"
+								},
+								"password": {
+									"type": "string",
+									"example": "examplekeypassword",
+									"description": "Password for decrypting the private key (if applicable)."
+								}
+							}
 						}
 					}
 				}
@@ -231,6 +257,12 @@ func validateConfigStruct(config server.Config) error {
 		if !auth.IsVerifierValid(verifier) {
 			return fmt.Errorf("The checksum of install verfier at index %d did not match", i)
 		}
+	}
+
+	// check that either both or neither of certificate and private key are specified for https
+	if (config.Sensor.API.HTTPS.Certificate != "" && config.Sensor.API.HTTPS.Key == "") ||
+		(config.Sensor.API.HTTPS.Certificate == "" && config.Sensor.API.HTTPS.Key != "") {
+		return fmt.Errorf("Both a certificate and key must be specified to enable https")
 	}
 
 	return nil

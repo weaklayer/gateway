@@ -29,7 +29,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/weaklayer/gateway/common/auth"
-	"github.com/weaklayer/gateway/server/processing"
+	"github.com/weaklayer/gateway/server/output"
 	"github.com/weaklayer/gateway/server/token"
 )
 
@@ -59,14 +59,14 @@ func TestInstallAndEvents(t *testing.T) {
 		t.Fatalf("Failed to create test Verifier: %v", err)
 	}
 
-	installAPI, err := NewInstallAPI(tokenProcessor, []auth.Verifier{verifier})
+	eventOutput := output.NewTopOutput([]output.Output{})
+
+	installAPI, err := NewInstallAPI(tokenProcessor, eventOutput, []auth.Verifier{verifier})
 	if err != nil {
 		t.Fatalf("Falied to create install API endpoint: %v", err)
 	}
 
-	eventsProcessor := processing.EventProcessor{}
-
-	eventsAPI, err := NewEventsAPI(tokenProcessor, eventsProcessor)
+	eventsAPI, err := NewEventsAPI(tokenProcessor, eventOutput)
 	if err != nil {
 		t.Fatalf("Falied to create events API endpoint: %v", err)
 	}

@@ -32,7 +32,7 @@ import (
 
 	"github.com/weaklayer/gateway/common/auth"
 	"github.com/weaklayer/gateway/server/events"
-	"github.com/weaklayer/gateway/server/processing"
+	"github.com/weaklayer/gateway/server/output"
 	"github.com/weaklayer/gateway/server/token"
 	"github.com/xeipuuv/gojsonschema"
 )
@@ -69,12 +69,12 @@ var installRequestJSONSchema = fmt.Sprintf(`
 type InstallAPI struct {
 	tokenProcessor       token.Processor
 	installRequestSchema *gojsonschema.Schema
-	eventProcessor       processing.EventProcessor
+	eventOutput          output.Output
 	verifiers            []auth.Verifier
 }
 
 // NewInstallAPI provisions a sensor API with its required resources
-func NewInstallAPI(tokenProcessor token.Processor, verifiers []auth.Verifier) (InstallAPI, error) {
+func NewInstallAPI(tokenProcessor token.Processor, eventOutput output.Output, verifiers []auth.Verifier) (InstallAPI, error) {
 	var installAPI InstallAPI
 
 	schemaLoader := gojsonschema.NewStringLoader(installRequestJSONSchema)
@@ -86,6 +86,7 @@ func NewInstallAPI(tokenProcessor token.Processor, verifiers []auth.Verifier) (I
 	return InstallAPI{
 		tokenProcessor:       tokenProcessor,
 		installRequestSchema: schemaVerifier,
+		eventOutput:          eventOutput,
 		verifiers:            verifiers,
 	}, nil
 }
@@ -195,7 +196,7 @@ func (installAPI InstallAPI) Handle(responseWriter http.ResponseWriter, request 
 		},
 		Label: installRequest.Label,
 	}
-	installAPI.eventProcessor.Consume([]events.Event{installEvent})
+	installAPI.eventOutput.Consume([]events.Event{installEvent})
 
 	response := InstallResponse{
 		Token:     token,

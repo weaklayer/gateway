@@ -27,21 +27,21 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/weaklayer/gateway/server/events"
-	"github.com/weaklayer/gateway/server/processing"
+	"github.com/weaklayer/gateway/server/output"
 	"github.com/weaklayer/gateway/server/token"
 )
 
 // EventsAPI handles requests to the /events path
 type EventsAPI struct {
 	tokenProcessor token.Processor
-	eventProcessor processing.EventProcessor
+	eventOutput    output.Output
 }
 
 // NewEventsAPI provisions an events API with its required resources
-func NewEventsAPI(tokenProcessor token.Processor, eventProcessor processing.EventProcessor) (EventsAPI, error) {
+func NewEventsAPI(tokenProcessor token.Processor, eventOutput output.Output) (EventsAPI, error) {
 	return EventsAPI{
 		tokenProcessor: tokenProcessor,
-		eventProcessor: eventProcessor,
+		eventOutput:    eventOutput,
 	}, nil
 }
 
@@ -119,7 +119,7 @@ func (eventsAPI EventsAPI) Handle(responseWriter http.ResponseWriter, request *h
 		parsedEvents = append(parsedEvents, event)
 	}
 
-	err = eventsAPI.eventProcessor.Consume(parsedEvents)
+	err = eventsAPI.eventOutput.Consume(parsedEvents)
 	if err != nil {
 		log.Info().Err(err).Msg("Event processing failed")
 		responseWriter.WriteHeader(http.StatusInternalServerError)

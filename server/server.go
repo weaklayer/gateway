@@ -28,7 +28,7 @@ import (
 
 	"github.com/weaklayer/gateway/common/auth"
 	"github.com/weaklayer/gateway/server/api"
-	"github.com/weaklayer/gateway/server/processing"
+	"github.com/weaklayer/gateway/server/output"
 	"github.com/weaklayer/gateway/server/token"
 )
 
@@ -57,20 +57,25 @@ type Config struct {
 	}
 }
 
+func createEventOutput(config Config) output.Output {
+	outputs := []output.Output{output.NewStdoutOutput()}
+	return output.NewTopOutput(outputs)
+}
+
 // Run runs the Weaklayer Gateway Server
 func Run(config Config) error {
 
 	log.Info().Msg("Starting Weaklayer Gateway Server")
 
-	//TODO: accept past secrets
+	eventOutput := createEventOutput(config)
+
 	tokenProcessor := token.NewProcessor(config.Sensor.Token.Secrets.Current, config.Sensor.Token.Secrets.Past, config.Sensor.Token.Duration/1000000)
-	installAPI, err := api.NewInstallAPI(tokenProcessor, config.Sensor.Install.Verifiers)
+	installAPI, err := api.NewInstallAPI(tokenProcessor, eventOutput, config.Sensor.Install.Verifiers)
 	if err != nil {
 		return fmt.Errorf("Failed to create sensor install API endpoint: %w", err)
 	}
 
-	eventProcessor := processing.EventProcessor{}
-	eventsAPI, err := api.NewEventsAPI(tokenProcessor, eventProcessor)
+	eventsAPI, err := api.NewEventsAPI(tokenProcessor, eventOutput)
 	if err != nil {
 		return fmt.Errorf("Failed to create sensor events API endpoint: %w", err)
 	}

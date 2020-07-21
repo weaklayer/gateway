@@ -31,6 +31,8 @@ import (
 type Output interface {
 	// Consume should be non-blocking except to add events to a channel
 	Consume(events []events.Event) error
+	// Close performs any nessecary cleanup in an output (e.g. close file descriptor)
+	Close()
 }
 
 // NewTopOutput creates a NewTopOutput instance
@@ -44,6 +46,13 @@ func NewTopOutput(outputs []Output) TopOutput {
 // It dispatches events to all the different outputs
 type TopOutput struct {
 	outputs []Output
+}
+
+// Close closes all outputs
+func (topOutput TopOutput) Close() {
+	for _, output := range topOutput.outputs {
+		output.Close()
+	}
 }
 
 // Consume is the main destination for sensor events.

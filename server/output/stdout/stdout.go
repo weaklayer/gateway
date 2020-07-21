@@ -17,7 +17,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-package output
+package stdout
 
 import (
 	"encoding/json"
@@ -31,10 +31,10 @@ import (
 // NewStdoutOutput creates an StdoutOutput instance
 func NewStdoutOutput() StdoutOutput {
 	stdoutput := StdoutOutput{
-		eventStrings: make(chan string, 1000),
+		eventStrings: make(chan string, 10000),
 	}
 
-	go stdoutput.process()
+	go process(stdoutput.eventStrings)
 
 	return stdoutput
 }
@@ -42,6 +42,11 @@ func NewStdoutOutput() StdoutOutput {
 // StdoutOutput is an event output that writes events to stdout
 type StdoutOutput struct {
 	eventStrings chan string
+}
+
+// Close does nothing for StdoutOutput
+// It is implemented to conform with the Output interface
+func (stdoutOutput StdoutOutput) Close() {
 }
 
 // Consume takes the events and writes them to a channel for processing
@@ -52,11 +57,17 @@ func (stdoutOutput StdoutOutput) Consume(events []events.Event) error {
 		serializedBytes, err := json.Marshal(event)
 		if err != nil {
 			encounteredError = true
-			log.Warn().Err(err).Msg("Failed to serialized event. Discarding Event.")
+			log.Info().Err(err).Msg("Failed to serialized event. Discarding Event.")
 			continue
 		}
 
-		stdoutOutput.eventStrings <- string(serializedBytes)
+		select {
+		case stdoutOutput.eventStrings <- string(serializedBytes):
+		default:
+			encounteredError = true
+			log.Info().Msgf("Event queue for stdout output full. Discarding Event.")
+			continue
+		}
 	}
 
 	if encounteredError {
@@ -66,15 +77,15 @@ func (stdoutOutput StdoutOutput) Consume(events []events.Event) error {
 	return nil
 }
 
-func (stdoutOutput StdoutOutput) process() {
-	for eventString := range stdoutOutput.eventStrings {
+func process(eventStrings chan string) {
+	for eventString := range eventStrings {
 		n, err := fmt.Println(eventString)
 		if err != nil {
-			log.Warn().Err(err).Msg("Error printing event to stdout.")
+			log.Info().Err(err).Msg("Error printing event to stdout.")
 		}
 
 		if n < len(eventString) {
-			log.Warn().Msg("Failed to print all event bytes to stdout.")
+			log.Info().Msg("Failed to print all event bytes to stdout.")
 		}
 	}
 }

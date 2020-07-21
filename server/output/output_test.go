@@ -35,6 +35,9 @@ func (dummyConsumer dummyConsumer) Consume(events []events.Event) error {
 	return nil
 }
 
+func (dummyConsumer dummyConsumer) Close() {
+}
+
 func TestOutputConsume(t *testing.T) {
 
 	sensor, err := uuid.NewRandom()

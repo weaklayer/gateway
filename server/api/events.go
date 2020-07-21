@@ -119,6 +119,10 @@ func (eventsAPI EventsAPI) Handle(responseWriter http.ResponseWriter, request *h
 		parsedEvents = append(parsedEvents, event)
 	}
 
+	if len(parsedEvents) <= 0 {
+		return
+	}
+
 	err = eventsAPI.eventOutput.Consume(parsedEvents)
 	if err != nil {
 		log.Info().Err(err).Msg("Event processing failed")

@@ -29,3 +29,16 @@ sensor:
         salt: oWrccA==
         hash: bAW4dciXby0vAAhqHDebxsLioy6H3eYzGqvL8CMRhh0=
         checksum: fhpiskuymKjvsyRKJ/U9ohdKRDpgft4x/Exn/zHM1zs=
+# Destinations for the gateway to write events to
+# At least one output must be configured / enabled
+output:
+  stdout:
+    # set to true to have the gateway print events to stdout
+    enable: true
+  filesystem:
+    # the top directory where the gateway will write events to the filesystem
+    directory: ./weaklayer-events
+    # the time, in microseconds, that a file will be closed after
+    age: 30000000
+    # the size, in bytes, that a file will be closed after
+    size: 10000

@@ -32,11 +32,11 @@ import (
 
 func newFile(groupDirectory string, maxFileSize int) (file, error) {
 
-	filename := strconv.FormatInt(time.Now().UnixNano()/1000, 10) + ".json"
+	startTimeString := strconv.FormatInt(time.Now().UnixNano()/1000, 10)
+	filename := startTimeString + ".json"
 
 	// files being written to are 'dot' files
 	inProgressPath := filepath.Join(groupDirectory, "."+filename)
-	finalPath := filepath.Join(groupDirectory, filename)
 	fileInstance, err := os.OpenFile(inProgressPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0640)
 	if err != nil {
 		return file{}, fmt.Errorf("Failed to open file %s: %w", inProgressPath, err)
@@ -55,7 +55,7 @@ func newFile(groupDirectory string, maxFileSize int) (file, error) {
 		closeGuard:  &sync.Once{},
 	}
 
-	go process(fileInstance, finalPath, maxFileSize, content, done)
+	go process(fileInstance, groupDirectory, startTimeString, maxFileSize, content, done)
 
 	return fileOutput, nil
 }
@@ -120,7 +120,7 @@ func (file file) Write(data []byte) bool {
 	}
 }
 
-func process(file *os.File, finalPath string, maxFileSize int, content <-chan []byte, doneChannel chan<- struct{}) {
+func process(file *os.File, groupDirectory string, startTimeString string, maxFileSize int, content <-chan []byte, doneChannel chan<- struct{}) {
 	// Closure to indicate we are done
 	done := false
 	sayDone := func() {
@@ -140,7 +140,14 @@ func process(file *os.File, finalPath string, maxFileSize int, content <-chan []
 	closeFile := func() {
 		sayDone()
 
-		err := write([]byte("\n]"))
+		// Only do the newline if we wrote an event
+		// Otherwise there is a blank line between the start array and end array
+		endString := "]"
+		if totalBytesWritten > 0 {
+			endString = "\n]"
+		}
+
+		err := write([]byte(endString))
 		if err != nil {
 			log.Warn().Err(err).Msgf("Failed to write JSON array closure to %s", file.Name())
 		}
@@ -150,6 +157,9 @@ func process(file *os.File, finalPath string, maxFileSize int, content <-chan []
 			log.Warn().Err(err).Msgf("Failed to properly close file %v", file.Name())
 		}
 
+		endTimeString := strconv.FormatInt(time.Now().UnixNano()/1000, 10)
+		finalFileName := startTimeString + "-" + endTimeString + ".json"
+		finalPath := filepath.Join(groupDirectory, finalFileName)
 		err = os.Rename(file.Name(), finalPath)
 		if err != nil {
 			log.Warn().Err(err).Msgf("Failed to rename %s to %s", file.Name(), finalPath)

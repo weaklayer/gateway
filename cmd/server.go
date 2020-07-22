@@ -59,6 +59,16 @@ type stringsConfig struct {
 			} `json:"verifiers,omitempty"`
 		} `json:"install,omitempty"`
 	} `json:"sensor,omitempty"`
+	Output struct {
+		Filesystem struct {
+			Directory string `json:"directory,omitempty"`
+			Age       int64  `json:"age,omitempty"`
+			Size      int    `json:"size,omitempty"`
+		} `json:"filesystem,omitempty"`
+		Stdout struct {
+			Enable bool `json:"enable,omitempty"`
+		} `json:"stdout,omitempty"`
+	} `json:"output,omitempty"`
 }
 
 var configJSONSchema = fmt.Sprintf(`
@@ -153,6 +163,43 @@ var configJSONSchema = fmt.Sprintf(`
 									"description": "Password for decrypting the private key (if applicable)."
 								}
 							}
+						}
+					}
+				}
+			}
+		},
+		"output": {
+			"type": "object",
+			"properties": {
+				"filesystem": {
+					"type": "object",
+					"properties": {
+						"directory": {
+							"type": "string",
+							"example": "./weaklayer-events",
+							"description": "Directory that the gateway will write events to"
+						},
+						"age": {
+							"type": "integer",
+							"minimum": 0,
+							"example": 3600,
+							"description": "The file age, in microseconds, that the filesystem output will close files at"
+						},
+						"size": {
+							"type": "integer",
+							"minimum": 0,
+							"example": 250000000,
+							"description": "The file size, in bytes, that the filesystem output will close files at"
+						}
+					}
+				},
+				"stdout": {
+					"type": "object",
+					"properties": {
+						"enable": {
+							"type": "boolean",
+							"example": true,
+							"description": "Flag to indicate if the gateway will print events to stdout"
 						}
 					}
 				}

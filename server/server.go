@@ -62,14 +62,39 @@ type Config struct {
 			Verifiers []auth.Verifier
 		}
 	}
+	Output struct {
+		Filesystem struct {
+			Directory string
+			Age       int64
+			Size      int
+		}
+		Stdout struct {
+			Enable bool
+		}
+	}
 }
 
 func createEventOutput(config Config) (output.Output, error) {
-	filesystemOutput, err := filesystem.NewFilesystemOutput(".", 100*time.Second, 2500)
-	if err != nil {
-		return output.NewTopOutput([]output.Output{}), err
+	outputs := []output.Output{}
+
+	if config.Output.Stdout.Enable {
+		outputs = append(outputs, stdout.NewStdoutOutput())
 	}
-	outputs := []output.Output{stdout.NewStdoutOutput(), filesystemOutput}
+
+	if config.Output.Filesystem.Directory != "" {
+		filesystemOutput, err := filesystem.NewFilesystemOutput(config.Output.Filesystem.Directory,
+			time.Duration(config.Output.Filesystem.Age)*time.Microsecond,
+			config.Output.Filesystem.Size)
+		if err != nil {
+			return output.NewTopOutput([]output.Output{}), err
+		}
+		outputs = append(outputs, filesystemOutput)
+	}
+
+	if len(outputs) == 0 {
+		return output.NewTopOutput([]output.Output{}), fmt.Errorf("No output specified")
+	}
+
 	return output.NewTopOutput(outputs), nil
 }
 

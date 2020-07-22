@@ -22,20 +22,21 @@ package filesystem
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/rs/zerolog/log"
 	"github.com/weaklayer/gateway/server/events"
 )
 
-func newMetaFile(groupDirectory string) (metaFile, error) {
-	newFile, err := newFile(groupDirectory)
+func newMetaFile(groupDirectory string, maxFileAge time.Duration, maxFileSize int) (metaFile, error) {
+	newFile, err := newFile(groupDirectory, maxFileSize)
 	if err != nil {
 		return metaFile{}, fmt.Errorf("Failed to create first file in directory %s: %w", groupDirectory, err)
 	}
 
 	eventData := make(chan []byte, 10000)
 
-	go metaProcess(groupDirectory, newFile, eventData)
+	go metaProcess(groupDirectory, maxFileAge, maxFileSize, newFile, eventData)
 
 	return metaFile{
 		groupDirectory: groupDirectory,
@@ -82,15 +83,19 @@ func (metaFile metaFile) Consume(events []events.Event) error {
 	return nil
 }
 
-func metaProcess(groupDirectory string, initialFile file, contentChannel <-chan []byte) {
+func metaProcess(groupDirectory string, maxFileAge time.Duration, maxFileSize int, initialFile file, contentChannel <-chan []byte) {
 	writingFile := initialFile
+	fileTimer := time.NewTimer(maxFileAge)
 
 	rotateFile := func() error {
-		newFile, err := newFile(groupDirectory)
+		fileTimer = time.NewTimer(maxFileAge)
+
+		newFile, err := newFile(groupDirectory, maxFileSize)
 		if err != nil {
 			return err
 		}
 
+		// only rotate the files if creating the new file succeeded
 		oldFile := writingFile
 		writingFile = newFile
 		oldFile.Close()
@@ -98,21 +103,35 @@ func metaProcess(groupDirectory string, initialFile file, contentChannel <-chan 
 		return nil
 	}
 
-	for eventContent := range contentChannel {
-		contentWritten := writingFile.Write(eventContent)
-		if contentWritten {
-			continue
-		}
+readLoop:
+	for {
+		select {
+		case eventContent, ok := <-contentChannel:
+			if !ok {
+				// contentChannel closed. Time to shut down.
+				break readLoop
+			}
 
-		err := rotateFile()
-		if err != nil {
-			log.Info().Err(err).Msg("File rotation failed")
-			continue
-		}
+			contentWritten := writingFile.Write(eventContent)
+			if contentWritten {
+				continue
+			}
 
-		contentWritten = writingFile.Write(eventContent)
-		if !contentWritten {
-			log.Info().Msg("Writing to file failed after file rotation. Discarding event")
+			err := rotateFile()
+			if err != nil {
+				log.Info().Err(err).Msg("File rotation failed. Discarding event")
+				continue
+			}
+
+			contentWritten = writingFile.Write(eventContent)
+			if !contentWritten {
+				log.Info().Msg("Writing to file failed after file rotation. Discarding event")
+			}
+		case <-fileTimer.C:
+			err := rotateFile()
+			if err != nil {
+				log.Info().Err(err).Msg("File rotation on timer failed.")
+			}
 		}
 	}
 

@@ -30,7 +30,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func newFile(groupDirectory string) (file, error) {
+func newFile(groupDirectory string, maxFileSize int) (file, error) {
 
 	filename := strconv.FormatInt(time.Now().UnixNano()/1000, 10) + ".json"
 
@@ -55,7 +55,7 @@ func newFile(groupDirectory string) (file, error) {
 		closeGuard:  &sync.Once{},
 	}
 
-	go process(fileInstance, finalPath, content, done)
+	go process(fileInstance, finalPath, maxFileSize, content, done)
 
 	return fileOutput, nil
 }
@@ -120,7 +120,7 @@ func (file file) Write(data []byte) bool {
 	}
 }
 
-func process(file *os.File, finalPath string, content <-chan []byte, doneChannel chan<- struct{}) {
+func process(file *os.File, finalPath string, maxFileSize int, content <-chan []byte, doneChannel chan<- struct{}) {
 	// Closure to indicate we are done
 	done := false
 	sayDone := func() {
@@ -130,18 +130,7 @@ func process(file *os.File, finalPath string, content <-chan []byte, doneChannel
 		}
 	}
 
-	// track here if the file should be closed
-	startTime := time.Now().Unix()
 	var totalBytesWritten int = 0
-	shouldFinish := func() bool {
-		now := time.Now().Unix()
-		// After 10 minutes or 250Mb
-		if (now-startTime > 10) || (totalBytesWritten > 250_000_000) {
-			return true
-		}
-		return false
-	}
-
 	write := func(content []byte) error {
 		n, err := writeToFile(file, content)
 		totalBytesWritten = totalBytesWritten + n
@@ -188,8 +177,7 @@ func process(file *os.File, finalPath string, content <-chan []byte, doneChannel
 			return
 		}
 
-		if shouldFinish() {
-			// Indicate we are done so incoming data will stop eventually
+		if totalBytesWritten >= maxFileSize {
 			sayDone()
 		}
 	}

@@ -24,13 +24,14 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/weaklayer/gateway/server/events"
 )
 
 // NewFilesystemOutput creates a FilesystemOutput instance
-func NewFilesystemOutput(directory string) (FilesystemOutput, error) {
+func NewFilesystemOutput(directory string, maxFileAge time.Duration, maxFileSize int) (FilesystemOutput, error) {
 
 	// Attempt to create the directory if it does not exist.
 	err := createDirectory(directory)
@@ -41,6 +42,8 @@ func NewFilesystemOutput(directory string) (FilesystemOutput, error) {
 	filesystemOutput := FilesystemOutput{
 		directory:             directory,
 		metaFiles:             make(map[uuid.UUID]metaFile),
+		maxFileAge:            maxFileAge,
+		maxFileSize:           maxFileSize,
 		metaFileCreationMutex: &sync.Mutex{},
 	}
 
@@ -51,6 +54,8 @@ func NewFilesystemOutput(directory string) (FilesystemOutput, error) {
 type FilesystemOutput struct {
 	directory             string
 	metaFiles             map[uuid.UUID]metaFile
+	maxFileAge            time.Duration
+	maxFileSize           int
 	metaFileCreationMutex *sync.Mutex
 }
 
@@ -104,7 +109,7 @@ func (filesystemOutput FilesystemOutput) createAndStoreGroupMetaFile(group uuid.
 			return metaFileInstance, fmt.Errorf("Failed to create directory %s for filesystem output: %w", metaFileDirectoryPath, err)
 		}
 
-		metaFileInstance, err = newMetaFile(metaFileDirectoryPath)
+		metaFileInstance, err = newMetaFile(metaFileDirectoryPath, filesystemOutput.maxFileAge, filesystemOutput.maxFileSize)
 		if err != nil {
 			return metaFileInstance, fmt.Errorf("Failed to create file for writing: %w", err)
 		}

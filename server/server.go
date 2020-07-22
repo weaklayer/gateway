@@ -65,7 +65,7 @@ type Config struct {
 }
 
 func createEventOutput(config Config) (output.Output, error) {
-	filesystemOutput, err := filesystem.NewFilesystemOutput(".")
+	filesystemOutput, err := filesystem.NewFilesystemOutput(".", 100*time.Second, 2500)
 	if err != nil {
 		return output.NewTopOutput([]output.Output{}), err
 	}

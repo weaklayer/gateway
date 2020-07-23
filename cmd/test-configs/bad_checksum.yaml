@@ -17,3 +17,5 @@ sensor:
         hash: bAW4dciXby0vAAhqHDebxsLioy6H3eYzGqvL8CMRhh0=
         # modified checksum slightly from good value
         checksum: fhpiskuymKjvsyRKJ/U9ohdKRDpgft4x/Exn/zHM1zd=
+outputs:
+- type: stdout

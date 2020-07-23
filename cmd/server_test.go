@@ -92,3 +92,21 @@ func TestServerBadHttpsConfig(t *testing.T) {
 	}
 	t.Logf("%v", err)
 }
+
+func TestServerMissingOutputConfig(t *testing.T) {
+	configFilePath = "test-configs/missing_outputs.yaml"
+	err := serverCmdRun(serverC, make([]string, 0))
+	if err == nil {
+		t.Fatalf("Server command did not produce error")
+	}
+	t.Logf("%v", err)
+}
+
+func TestServerMissingFilesystemOutputDirectoryConfig(t *testing.T) {
+	configFilePath = "test-configs/missing_output_filesystem_directory.yaml"
+	err := serverCmdRun(serverC, make([]string, 0))
+	if err == nil {
+		t.Fatalf("Server command did not produce error")
+	}
+	t.Logf("%v", err)
+}

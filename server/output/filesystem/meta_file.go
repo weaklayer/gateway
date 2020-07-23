@@ -71,7 +71,7 @@ func (metaFile metaFile) Consume(events []events.Event) error {
 		case metaFile.eventData <- serializedBytes:
 		default:
 			encounteredError = true
-			log.Info().Msgf("Event queue for directory %s full. Discarding Event", metaFile.groupDirectory)
+			log.Info().Msgf("Event queue for filesystem output directory %s full. Discarding Event", metaFile.groupDirectory)
 			continue
 		}
 	}

@@ -30,18 +30,19 @@ import (
 
 // NewStdoutOutput creates an StdoutOutput instance
 func NewStdoutOutput() StdoutOutput {
+	eventStrings := make(chan string, 10000)
 	stdoutput := StdoutOutput{
-		eventStrings: make(chan string, 10000),
+		eventStrings: eventStrings,
 	}
 
-	go process(stdoutput.eventStrings)
+	go process(eventStrings)
 
 	return stdoutput
 }
 
 // StdoutOutput is an event output that writes events to stdout
 type StdoutOutput struct {
-	eventStrings chan string
+	eventStrings chan<- string
 }
 
 // Close does nothing for StdoutOutput
@@ -77,7 +78,7 @@ func (stdoutOutput StdoutOutput) Consume(events []events.Event) error {
 	return nil
 }
 
-func process(eventStrings chan string) {
+func process(eventStrings <-chan string) {
 	for eventString := range eventStrings {
 		n, err := fmt.Println(eventString)
 		if err != nil {

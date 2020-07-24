@@ -183,13 +183,13 @@ var configJSONSchema = fmt.Sprintf(`
 					},
 					"age": {
 						"type": "integer",
-						"minimum": 0,
+						"minimum": 1,
 						"example": 3600,
 						"description": "The file age, in microseconds, that the filesystem output will close files at"
 					},
 					"size": {
 						"type": "integer",
-						"minimum": 0,
+						"minimum": 1,
 						"example": 250000000,
 						"description": "The file size, in bytes, that the filesystem output will close files at"
 					}

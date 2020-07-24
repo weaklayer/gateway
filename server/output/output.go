@@ -29,7 +29,6 @@ import (
 // It allows the top-level output handler to keep a list of
 // many outputs to send events to without knowing their implenetation
 type Output interface {
-	// Consume should be non-blocking except to add events to a channel
 	Consume(events []events.Event) error
 	// Close performs any nessecary cleanup in an output (e.g. close file descriptor)
 	Close()

@@ -73,6 +73,10 @@ func (filesystemOutput FilesystemOutput) Close() {
 
 // Consume takes the events and writes them to a channel for processing
 func (filesystemOutput FilesystemOutput) Consume(events []events.Event) error {
+	// The filesystem output relies on there being an event to get a group id
+	if len(events) <= 0 {
+		return nil
+	}
 
 	// All events in a single call will have the same group and sensor
 	group := events[0].GetGroup()
@@ -123,7 +127,7 @@ func (filesystemOutput FilesystemOutput) createAndStoreGroupMetaFile(group uuid.
 func createDirectory(path string) error {
 	_, err := os.Stat(path)
 	if os.IsNotExist(err) {
-		err = os.Mkdir(path, 0755)
+		err = os.Mkdir(path, 0750)
 	}
 	return err
 }

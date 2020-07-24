@@ -59,6 +59,12 @@ type stringsConfig struct {
 			} `json:"verifiers,omitempty"`
 		} `json:"install,omitempty"`
 	} `json:"sensor,omitempty"`
+	Outputs []struct {
+		Type      string `json:"type,omitempty"`
+		Directory string `json:"directory,omitempty"`
+		Age       int64  `json:"age,omitempty"`
+		Size      int    `json:"size,omitempty"`
+	} `json:"outputs,omitempty"`
 }
 
 var configJSONSchema = fmt.Sprintf(`
@@ -66,7 +72,7 @@ var configJSONSchema = fmt.Sprintf(`
 	"$schema": "http://json-schema.org/draft-07/schema#",
 	"title": "Config",
 	"type": "object",
-	"required": ["sensor"],
+	"required": ["sensor", "outputs"],
 	"properties": {
 		"sensor": {
 			"type": "object",
@@ -154,6 +160,38 @@ var configJSONSchema = fmt.Sprintf(`
 								}
 							}
 						}
+					}
+				}
+			}
+		},
+		"outputs": {
+			"type": "array",
+			"items": {
+				"type": "object",
+				"required": ["type"],
+				"properties": {
+					"type": {
+						"type": "string",
+						"enum": ["stdout", "filesystem"],
+						"example": "stdout",
+						"description": "The type of output to configure"
+					},
+					"directory": {
+						"type": "string",
+						"example": "./weaklayer-events",
+						"description": "Directory that the gateway will write events to"
+					},
+					"age": {
+						"type": "integer",
+						"minimum": 1,
+						"example": 3600,
+						"description": "The file age, in microseconds, that the filesystem output will close files at"
+					},
+					"size": {
+						"type": "integer",
+						"minimum": 1,
+						"example": 250000000,
+						"description": "The file size, in bytes, that the filesystem output will close files at"
 					}
 				}
 			}
@@ -263,6 +301,30 @@ func validateConfigStruct(config server.Config) error {
 	if (config.Sensor.API.HTTPS.Certificate != "" && config.Sensor.API.HTTPS.Key == "") ||
 		(config.Sensor.API.HTTPS.Certificate == "" && config.Sensor.API.HTTPS.Key != "") {
 		return fmt.Errorf("Both a certificate and key must be specified to enable https")
+	}
+
+	if len(config.Outputs) == 0 {
+		return fmt.Errorf("Must configure at least one output")
+	}
+	for i, configOutput := range config.Outputs {
+		if configOutput.Type == "stdout" {
+			// no fields for stdoutput
+		} else if configOutput.Type == "filesystem" {
+			directory := configOutput.Directory
+			if directory == "" {
+				return fmt.Errorf("Must specify a directory for filesystem output at location %d in outputs array", i)
+			}
+			age := configOutput.Age
+			if age <= 0 {
+				return fmt.Errorf("Must specify a strictly positive age for filesystem output at location %d in outputs array", i)
+			}
+			size := configOutput.Size
+			if size <= 0 {
+				return fmt.Errorf("Must specify a strictly positive size for filesystem output at location %d in outputs array", i)
+			}
+		} else {
+			return fmt.Errorf("Unknown output type %s at at location %d in outputs array", configOutput.Type, i)
+		}
 	}
 
 	return nil

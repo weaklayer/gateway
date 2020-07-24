@@ -20,15 +20,22 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	stdlog "log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/rs/zerolog/log"
 
 	"github.com/weaklayer/gateway/common/auth"
 	"github.com/weaklayer/gateway/server/api"
-	"github.com/weaklayer/gateway/server/processing"
+	"github.com/weaklayer/gateway/server/output"
+	"github.com/weaklayer/gateway/server/output/filesystem"
+	"github.com/weaklayer/gateway/server/output/stdout"
 	"github.com/weaklayer/gateway/server/token"
 )
 
@@ -55,6 +62,35 @@ type Config struct {
 			Verifiers []auth.Verifier
 		}
 	}
+	Outputs []struct {
+		Type      string
+		Directory string
+		Age       int64
+		Size      int
+	}
+}
+
+func createEventOutput(config Config) (output.Output, error) {
+	outputs := []output.Output{}
+
+	for _, configOutput := range config.Outputs {
+		if configOutput.Type == "stdout" {
+			outputs = append(outputs, stdout.NewStdoutOutput())
+		} else if configOutput.Type == "filesystem" {
+			directory := configOutput.Directory
+			age := configOutput.Age
+			size := configOutput.Size
+			filesystemOutput, err := filesystem.NewFilesystemOutput(directory,
+				time.Duration(age)*time.Microsecond,
+				size)
+			if err != nil {
+				return output.NewTopOutput([]output.Output{}), err
+			}
+			outputs = append(outputs, filesystemOutput)
+		}
+	}
+
+	return output.NewTopOutput(outputs), nil
 }
 
 // Run runs the Weaklayer Gateway Server
@@ -62,15 +98,18 @@ func Run(config Config) error {
 
 	log.Info().Msg("Starting Weaklayer Gateway Server")
 
-	//TODO: accept past secrets
+	topLevelEventOutput, err := createEventOutput(config)
+	if err != nil {
+		return fmt.Errorf("Failed to create desired outputs: %w", err)
+	}
+
 	tokenProcessor := token.NewProcessor(config.Sensor.Token.Secrets.Current, config.Sensor.Token.Secrets.Past, config.Sensor.Token.Duration/1000000)
-	installAPI, err := api.NewInstallAPI(tokenProcessor, config.Sensor.Install.Verifiers)
+	installAPI, err := api.NewInstallAPI(tokenProcessor, topLevelEventOutput, config.Sensor.Install.Verifiers)
 	if err != nil {
 		return fmt.Errorf("Failed to create sensor install API endpoint: %w", err)
 	}
 
-	eventProcessor := processing.EventProcessor{}
-	eventsAPI, err := api.NewEventsAPI(tokenProcessor, eventProcessor)
+	eventsAPI, err := api.NewEventsAPI(tokenProcessor, topLevelEventOutput)
 	if err != nil {
 		return fmt.Errorf("Failed to create sensor events API endpoint: %w", err)
 	}
@@ -80,29 +119,56 @@ func Run(config Config) error {
 		InstallHandler: installAPI,
 	}
 
-	var listenErr error
+	var server *http.Server
 	if useTLS(config.Sensor.API.HTTPS.Certificate, config.Sensor.API.HTTPS.Key) {
 		tlsConfig, err := getTLSConfig(config.Sensor.API.HTTPS.Certificate, config.Sensor.API.HTTPS.Key, config.Sensor.API.HTTPS.Password)
 		if err != nil {
 			return fmt.Errorf("Failed to produce TLS config: %w", err)
 		}
 
-		s := &http.Server{
+		server = &http.Server{
 			ErrorLog:  stdlog.New(log.Logger, "", 0),
 			Addr:      fmt.Sprintf("%s:%d", config.Sensor.API.Host, config.Sensor.API.Port),
 			Handler:   sensorAPI,
 			TLSConfig: tlsConfig,
 		}
 
-		listenErr = s.ListenAndServeTLS("", "")
+		go func() {
+			err := server.ListenAndServeTLS("", "")
+			if err != nil && err != http.ErrServerClosed {
+				log.Error().Err(err).Msg("HTTP server error")
+			}
+		}()
 	} else {
-		s := &http.Server{
+		server = &http.Server{
 			ErrorLog: stdlog.New(log.Logger, "", 0),
 			Addr:     fmt.Sprintf("%s:%d", config.Sensor.API.Host, config.Sensor.API.Port),
 			Handler:  sensorAPI,
 		}
-		listenErr = s.ListenAndServe()
+		go func() {
+			err := server.ListenAndServe()
+			if err != nil && err != http.ErrServerClosed {
+				log.Error().Err(err).Msg("HTTP server error")
+			}
+		}()
 	}
 
-	return listenErr
+	shutdown := make(chan os.Signal, 1)
+	signal.Notify(shutdown, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	<-shutdown
+
+	// Stop the HTTP server. Give 5 seconds max for this.
+	context, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	err = server.Shutdown(context)
+	if err != nil {
+		log.Error().Err(err).Msg("Error shutting down HTTP server")
+	}
+
+	// Requests are stopped now.
+	// Close outputs. Wait 1 seconds for it to happen.
+	topLevelEventOutput.Close()
+	time.Sleep(1 * time.Second)
+
+	return nil
 }

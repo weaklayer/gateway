@@ -28,12 +28,6 @@
     "outputs": [
         {
             "type": "stdout"
-        },
-        {
-            "type": "filesystem",
-            "directory": "./",
-            "age": 100000000,
-            "size": 1000000
         }
     ]
 }

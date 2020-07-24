@@ -1,5 +1,7 @@
 # !/bin/sh
 
+set -e
+
 go test ./... > /dev/null
 
 rm -rf dist

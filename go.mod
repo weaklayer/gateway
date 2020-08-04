@@ -7,7 +7,7 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/rs/zerolog v1.19.0
 	github.com/spf13/cobra v1.0.0
-	github.com/spf13/viper v1.7.0
+	github.com/spf13/viper v1.7.1
 	github.com/xeipuuv/gojsonschema v1.2.0
-	golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899
+	golang.org/x/crypto v0.0.0-20200728195943-123391ffb6de
 )

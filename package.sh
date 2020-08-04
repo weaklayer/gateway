@@ -21,3 +21,6 @@ cp example_config.json dist/
 GOOS=linux GOARCH=amd64 go build -o dist/weaklayer-gateway-linux-amd64
 GOOS=windows GOARCH=amd64 go build -o dist/weaklayer-gateway-windows-amd64.exe
 GOOS=darwin GOARCH=amd64 go build -o dist/weaklayer-gateway-macOS-amd64
+
+cd dist
+zip -r weaklayer-gateway-binary-release.zip ./

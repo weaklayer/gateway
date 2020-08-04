@@ -1,0 +1,21 @@
+name: 'Weaklayer Gateway'
+
+sources:
+  go: true
+
+allowed:
+  - mit
+  - apache-2.0
+  - bsd-2-clause
+  - bsd-3-clause
+  - cc0-1.0
+  - isc
+  - mpl-2.0
+
+reviewed:
+  go:
+  - github.com/magiconair/properties # 2-clause BSD 
+  - golang.org/x/crypto/pbkdf2 # Google golang license
+  - golang.org/x/sys/unix # Google golang license
+  - gopkg.in/ini.v1 # Apache 2.0
+  - gopkg.in/yaml.v2 # Apache 2.0

@@ -33,10 +33,10 @@ sensor:
 # At least one output must be present
 outputs:
 - type: stdout
-- type: filesystem
-  # the top directory where the gateway will write events to the filesystem
-  directory: ./weaklayer-events
-  # the time, in microseconds, that a file will be closed after
-  age: 30000000
-  # the size, in bytes, that a file will be closed after
-  size: 10000
+# - type: filesystem
+#   # the top directory where the gateway will write events to the filesystem
+#   directory: ./weaklayer-events
+#   # the time, in microseconds, that a file will be closed after
+#   age: 30000000
+#   # the size, in bytes, that a file will be closed after
+#   size: 10000

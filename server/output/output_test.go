@@ -30,7 +30,7 @@ type dummyConsumer struct {
 	eventsReceived *int
 }
 
-func (dummyConsumer dummyConsumer) Consume(events []events.Event) error {
+func (dummyConsumer dummyConsumer) Consume(events []events.SensorEvent) error {
 	*dummyConsumer.eventsReceived = *dummyConsumer.eventsReceived + len(events)
 	return nil
 }
@@ -50,20 +50,20 @@ func TestOutputConsume(t *testing.T) {
 	}
 
 	event1 := events.SensorEvent{
-		Type:   events.Unknown,
+		Type:   "Unknown",
 		Time:   1,
 		Sensor: sensor,
 		Group:  group,
 	}
 
 	event2 := events.SensorEvent{
-		Type:   events.Unknown,
+		Type:   "Unknown",
 		Time:   1,
 		Sensor: sensor,
 		Group:  group,
 	}
 
-	events := []events.Event{event1, event2}
+	events := []events.SensorEvent{event1, event2}
 
 	er1 := 0
 	er2 := 0

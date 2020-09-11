@@ -55,7 +55,7 @@ func (metaFile metaFile) Close() {
 	close(metaFile.eventData)
 }
 
-func (metaFile metaFile) Consume(events []events.Event) error {
+func (metaFile metaFile) Consume(events []events.SensorEvent) error {
 
 	var encounteredError = false
 

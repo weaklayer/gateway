@@ -1,22 +1,23 @@
 # Weaklayer Gateway
 
 Welcome to the Weaklayer Gateway repository!
-Weaklayer is a software system for Browser Detection and Response - like Endpoint Detection and Reponse (EDR) but in the browser.
+Weaklayer is a software system for Browser Detection and Response - like Endpoint Detection and Response (EDR) but in the browser.
 The Weaklayer Gateway (a server application) receives security data from Weaklayer Sensors.
 
-Weaklayer Gateway is intended to be simple and efficent middleware for integrating Weaklayer data into your security system. 
-This means it does the following:
-- Enforces sensor identity and authentication
-- Verifies incoming data against schemas
-- Integrate into downstream destinations for Wekalayer data
+Weaklayer Gateway is intended to be simple and efficient middleware for the following:
+- Enforcing sensor identity and authentication
+- Parsing incoming data
+- Making data available to downstream systems
 
-Note: While sensor data is validated against schemas, it is not sanitized. That is, the gateway will drop invalid data but it will not modify data. For example, the gateway does not modify strings to prevent cross-site scripting or SQL injection.
+Note: Sensor data is not sanitized / pruned. That is, the gateway will not drop or modify data presented to it as long as it meets a couple simple requirements. For example, the gateway does not modify strings to prevent cross-site scripting or SQL injection.
 
 ## Usage
 
 Detailed usage instructions can be found in the [Docs section of the Weaklayer Website](https://weaklayer.com/docs/). This includes instructions for execution and configuration. Things that follow in this README are for Weaklayer Gateway development.
 
 ## Building From Source
+
+You may want to build from source to accommodate a platform not covered in the binary release or to incorporate your own modifications.
 
 This requires you have golang (1.14+) installed.
 ```

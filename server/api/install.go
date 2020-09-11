@@ -165,7 +165,7 @@ func (installAPI InstallAPI) Handle(responseWriter http.ResponseWriter, request 
 				log.Info().Msgf("Token group %s differs from the install key group %s. Proceeding as new install.", claims.Group.String(), installRequest.Key.Group.String())
 			}
 		} else {
-			log.Info().Msg("Received an invalid JWT for install renewel. Proceeding as new install.")
+			log.Info().Msg("Received an invalid JWT for install renewal. Proceeding as new install.")
 		}
 	}
 
@@ -188,7 +188,9 @@ func (installAPI InstallAPI) Handle(responseWriter http.ResponseWriter, request 
 	// The installation was successful
 	// We need to generate an event for this before responding
 	dataMap := make(map[string]interface{})
-	dataMap["Label"] = installRequest.Label
+	dataMap["label"] = installRequest.Label
+	dataMap["isNewInstall"] = !isInstallationRenewal
+	dataMap["userAgent"] = request.Header.Get("User-Agent")
 	installEvent := events.SensorEvent{
 		Type:   "Install",
 		Time:   time.Now().UnixNano() / 1000,

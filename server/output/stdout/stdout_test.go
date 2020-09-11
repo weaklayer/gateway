@@ -38,15 +38,16 @@ func TestStdoutOutputConsume(t *testing.T) {
 	}
 
 	event := events.SensorEvent{
-		Type:   events.Unknown,
+		Type:   "Unknown",
 		Time:   1,
 		Sensor: sensor,
 		Group:  group,
+		Data:   make(map[string]interface{}),
 	}
 
 	stdoutput := NewStdoutOutput()
 
-	err = stdoutput.Consume([]events.Event{event})
+	err = stdoutput.Consume([]events.SensorEvent{event})
 	if err != nil {
 		t.Fatalf("Error consuming event: %v", err)
 	}

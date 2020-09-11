@@ -95,7 +95,7 @@ func (eventsAPI EventsAPI) Handle(responseWriter http.ResponseWriter, request *h
 		return
 	}
 
-	var parsedEvents []events.Event
+	var parsedEvents []events.SensorEvent
 
 	for decoder.More() {
 

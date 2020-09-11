@@ -44,20 +44,22 @@ func TestWritingEvents(t *testing.T) {
 	filesystemOutput, err := NewFilesystemOutput(".", 60*time.Second, 100000000)
 
 	event1 := events.SensorEvent{
-		Type:   events.Unknown,
+		Type:   "Unknown",
 		Time:   1,
 		Sensor: sensor,
 		Group:  group,
+		Data:   make(map[string]interface{}),
 	}
 
 	event2 := events.SensorEvent{
-		Type:   events.Unknown,
+		Type:   "Unknown",
 		Time:   1,
 		Sensor: sensor,
 		Group:  group,
+		Data:   make(map[string]interface{}),
 	}
 
-	err = filesystemOutput.Consume([]events.Event{event1, event2})
+	err = filesystemOutput.Consume([]events.SensorEvent{event1, event2})
 	if err != nil {
 		t.Fatalf("Failed to write events to filesystem: %v", err)
 	}
@@ -95,7 +97,7 @@ func TestWritingEvents(t *testing.T) {
 		}
 
 		for _, event := range fileEvents {
-			if group.String() != event.GetGroup().String() || sensor.String() != event.GetSensor().String() {
+			if group.String() != event.Group.String() || sensor.String() != event.Sensor.String() {
 				t.Fatalf("Event identifiers do not match")
 			}
 		}

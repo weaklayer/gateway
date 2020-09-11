@@ -51,7 +51,7 @@ func (stdoutOutput StdoutOutput) Close() {
 }
 
 // Consume takes the events and writes them to a channel for processing
-func (stdoutOutput StdoutOutput) Consume(events []events.Event) error {
+func (stdoutOutput StdoutOutput) Consume(events []events.SensorEvent) error {
 	var encounteredError = false
 
 	for _, event := range events {

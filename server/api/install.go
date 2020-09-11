@@ -151,7 +151,7 @@ func (installAPI InstallAPI) Handle(responseWriter http.ResponseWriter, request 
 		}
 	}
 
-	isInstallationRenewel := false
+	isInstallationRenewal := false
 	group := installRequest.Key.Group
 	var sensor uuid.UUID
 
@@ -160,7 +160,7 @@ func (installAPI InstallAPI) Handle(responseWriter http.ResponseWriter, request 
 		if isTokenValid {
 			if auth.UUIDEquals(installRequest.Key.Group, claims.Group) {
 				sensor = claims.Sensor
-				isInstallationRenewel = true
+				isInstallationRenewal = true
 			} else {
 				log.Info().Msgf("Token group %s differs from the install key group %s. Proceeding as new install.", claims.Group.String(), installRequest.Key.Group.String())
 			}
@@ -169,7 +169,7 @@ func (installAPI InstallAPI) Handle(responseWriter http.ResponseWriter, request 
 		}
 	}
 
-	if !isInstallationRenewel {
+	if !isInstallationRenewal {
 		sensor, err = uuid.NewRandom()
 		if err != nil {
 			log.Warn().Err(err).Msg("Failed to generate new sensor identifier")
@@ -187,16 +187,17 @@ func (installAPI InstallAPI) Handle(responseWriter http.ResponseWriter, request 
 
 	// The installation was successful
 	// We need to generate an event for this before responding
-	installEvent := events.InstallEvent{
-		SensorEvent: events.SensorEvent{
-			Type:   events.Install,
-			Time:   time.Now().UnixNano() / 1000,
-			Sensor: sensor,
-			Group:  group,
-		},
-		Label: installRequest.Label,
+	dataMap := make(map[string]interface{})
+	dataMap["Label"] = installRequest.Label
+	installEvent := events.SensorEvent{
+		Type:   "Install",
+		Time:   time.Now().UnixNano() / 1000,
+		Sensor: sensor,
+		Group:  group,
+		Data:   dataMap,
 	}
-	installAPI.eventOutput.Consume([]events.Event{installEvent})
+
+	installAPI.eventOutput.Consume([]events.SensorEvent{installEvent})
 
 	response := InstallResponse{
 		Token:     token,

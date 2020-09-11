@@ -27,6 +27,7 @@ import (
 )
 
 func TestWindowLocationEvent(t *testing.T) {
+	eventType := "WindowLocation"
 	const validWindowLocationEvent = `{
 		"type": "WindowLocation",
 		"time": 45678,
@@ -40,90 +41,20 @@ func TestWindowLocationEvent(t *testing.T) {
 	}`
 
 	event := testValidParseEvent(t, validWindowLocationEvent)
-	if event.GetType() != WindowLocation {
-		t.Fatalf("Parsed WindowLocation event as %s", event.GetType())
+	if event.Type != eventType {
+		t.Fatalf("Parsed WindowLocation event as %s", event.Type)
 	}
 
-	if event.GetTime() != 45678 {
+	if event.Time != 45678 {
 		t.Fatalf("Event time didn't match")
+	}
+
+	if event.Data["hostname"] != "weaklayer.com" {
+		t.Fatalf("Hostname didn't match")
 	}
 }
 
-func TestWindowEvent(t *testing.T) {
-	const validWindowEvent = `{
-		"type": "Window",
-		"time": 45678
-	}`
-
-	event := testValidParseEvent(t, validWindowEvent)
-	if event.GetType() != Window {
-		t.Fatalf("Window event as %s", event.GetType())
-	}
-
-	if event.GetTime() != 45678 {
-		t.Fatalf("Event time didn't match")
-	}
-}
-
-func TestValidUnknownEvent(t *testing.T) {
-	const validUnknownEvent = `{
-		"type": "SuperAwesomeFutureEvent",
-		"time": 45678452345,
-		"cooooool": {
-			"asdfas": "adfgsdfgsdfg"
-		},
-		"beans": [1,2,3,4,5,6,7,8],
-		"yo": "yo"
-	}`
-
-	event := testValidParseEvent(t, validUnknownEvent)
-	if event.GetType() != Unknown {
-		t.Fatalf("Parsed Unknown event as %s", event.GetType())
-	}
-
-	if event.GetTime() != 45678452345 {
-		t.Fatalf("Event time didn't match")
-	}
-}
-
-func TestInstallEvent(t *testing.T) {
-	sensor, err := uuid.NewRandom()
-	if err != nil {
-		t.Fatalf("Failed to generate UUID: %v", err)
-	}
-	group, err := uuid.NewRandom()
-	if err != nil {
-		t.Fatalf("Failed to generate UUID: %v", err)
-	}
-
-	installEvent := &InstallEvent{
-		SensorEvent{
-			Sensor: sensor,
-			Group:  group,
-			Time:   45678,
-			Type:   Install,
-		},
-		"kjsahdfkajsd",
-	}
-
-	if !auth.UUIDEquals(sensor, installEvent.GetSensor()) {
-		t.Fatalf("Sensor UUIDs don't match")
-	}
-
-	if !auth.UUIDEquals(group, installEvent.GetGroup()) {
-		t.Fatalf("Group UUIDs don't match")
-	}
-
-	if installEvent.GetType() != Install {
-		t.Fatalf("Incorrect event type")
-	}
-
-	if installEvent.GetTime() != 45678 {
-		t.Fatalf("Event time didn't match")
-	}
-}
-
-func testValidParseEvent(t *testing.T, data string) Event {
+func testValidParseEvent(t *testing.T, data string) SensorEvent {
 	sensor, err := uuid.NewRandom()
 	if err != nil {
 		t.Fatalf("Failed to generate UUID: %v", err)
@@ -138,11 +69,11 @@ func testValidParseEvent(t *testing.T, data string) Event {
 		t.Fatalf("Failed to parse valid event: %v", err)
 	}
 
-	if !auth.UUIDEquals(sensor, event.GetSensor()) {
+	if !auth.UUIDEquals(sensor, event.Sensor) {
 		t.Fatalf("Sensor UUIDs don't match")
 	}
 
-	if !auth.UUIDEquals(group, event.GetGroup()) {
+	if !auth.UUIDEquals(group, event.Group) {
 		t.Fatalf("Group UUIDs don't match")
 	}
 

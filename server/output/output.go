@@ -29,7 +29,7 @@ import (
 // It allows the top-level output handler to keep a list of
 // many outputs to send events to without knowing their implenetation
 type Output interface {
-	Consume(events []events.Event) error
+	Consume(events []events.SensorEvent) error
 	// Close performs any nessecary cleanup in an output (e.g. close file descriptor)
 	Close()
 }
@@ -55,7 +55,7 @@ func (topOutput TopOutput) Close() {
 }
 
 // Consume is the main destination for sensor events.
-func (topOutput TopOutput) Consume(events []events.Event) error {
+func (topOutput TopOutput) Consume(events []events.SensorEvent) error {
 	var errors []error = nil
 	for _, output := range topOutput.outputs {
 		err := output.Consume(events)

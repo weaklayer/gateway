@@ -20,6 +20,7 @@
 package api
 
 import (
+	"compress/gzip"
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -47,6 +48,12 @@ func NewEventsAPI(tokenProcessor token.Processor, eventOutput output.Output) (Ev
 
 // Handle does nothing right now
 func (eventsAPI EventsAPI) Handle(responseWriter http.ResponseWriter, request *http.Request) {
+
+	encodingHeader := request.Header.Get("Content-Encoding")
+	if encodingHeader != "gzip" {
+		responseWriter.WriteHeader(http.StatusUnsupportedMediaType)
+		return
+	}
 
 	// Authenticate the request
 	var authToken string
@@ -76,10 +83,30 @@ func (eventsAPI EventsAPI) Handle(responseWriter http.ResponseWriter, request *h
 	sensor := claims.Sensor
 	group := claims.Group
 
+	body := request.Body
+	defer func() {
+		err := body.Close()
+		if err != nil {
+			log.Info().Err(err).Msg("Failed to close request body")
+		}
+	}()
+
+	gzipReader, err := gzip.NewReader(request.Body)
+	if err != nil {
+		log.Info().Err(err).Msg("Failed to parse gzip content")
+		return
+	}
+	defer func() {
+		err := gzipReader.Close()
+		if err != nil {
+			log.Info().Err(err).Msg("Failed to close gzip content reader")
+		}
+	}()
+
 	// Start parsing the request body
 	// The request body is expected to be a (potentially large) JSON array of events
 	// Different event types can be mixed in the array
-	decoder := json.NewDecoder(request.Body)
+	decoder := json.NewDecoder(gzipReader)
 
 	openingToken, err := decoder.Token()
 	if err != nil {

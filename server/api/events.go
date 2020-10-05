@@ -20,6 +20,7 @@
 package api
 
 import (
+	"compress/gzip"
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -47,6 +48,12 @@ func NewEventsAPI(tokenProcessor token.Processor, eventOutput output.Output) (Ev
 
 // Handle does nothing right now
 func (eventsAPI EventsAPI) Handle(responseWriter http.ResponseWriter, request *http.Request) {
+
+	encodingHeader := request.Header.Get("Content-Encoding")
+	if encodingHeader != "gzip" {
+		responseWriter.WriteHeader(http.StatusUnsupportedMediaType)
+		return
+	}
 
 	// Authenticate the request
 	var authToken string
@@ -76,14 +83,35 @@ func (eventsAPI EventsAPI) Handle(responseWriter http.ResponseWriter, request *h
 	sensor := claims.Sensor
 	group := claims.Group
 
+	body := request.Body
+	defer func() {
+		err := body.Close()
+		if err != nil {
+			log.Info().Err(err).Msg("Failed to close request body")
+		}
+	}()
+
+	gzipReader, err := gzip.NewReader(request.Body)
+	if err != nil {
+		log.Info().Err(err).Msg("Failed to parse gzip content")
+		responseWriter.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	defer func() {
+		err := gzipReader.Close()
+		if err != nil {
+			log.Info().Err(err).Msg("Failed to close gzip content reader")
+		}
+	}()
+
 	// Start parsing the request body
 	// The request body is expected to be a (potentially large) JSON array of events
 	// Different event types can be mixed in the array
-	decoder := json.NewDecoder(request.Body)
+	decoder := json.NewDecoder(gzipReader)
 
 	openingToken, err := decoder.Token()
 	if err != nil {
-		log.Info().Err(err).Msg("Could not parse request body as json")
+		log.Info().Err(err).Msg("Could not parse request body as gzip compressed json")
 		responseWriter.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -99,6 +127,7 @@ func (eventsAPI EventsAPI) Handle(responseWriter http.ResponseWriter, request *h
 
 	for decoder.More() {
 
+		// get the bytes for the next event
 		var eventData json.RawMessage
 		err := decoder.Decode(&eventData)
 		if err != nil {
@@ -107,13 +136,12 @@ func (eventsAPI EventsAPI) Handle(responseWriter http.ResponseWriter, request *h
 			return
 		}
 
+		// parse the bytes as a sensor event
 		event, err := events.ParseEvent(eventData, sensor, group)
 		if err != nil {
-			// Event parsing errors are isolated to a single event
-			// Just skip over it and log that this happened
-			// For example, this could happen if the sensor sends an event type the server doesn't know about
-			log.Info().Err(err).Msg("Skipping event due to failed parsing")
-			continue
+			log.Info().Err(err).Msg("Could not parse JSON entry as sensor event")
+			responseWriter.WriteHeader(http.StatusBadRequest)
+			return
 		}
 
 		parsedEvents = append(parsedEvents, event)

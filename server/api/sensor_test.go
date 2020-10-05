@@ -21,6 +21,7 @@ package api
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -144,12 +145,24 @@ func TestInstallAndEvents(t *testing.T) {
 		{"type":"PageLoad", "time":88, "protocol": "http", "hostname": "weaklayer.com", "port": 80}
 	]`
 
-	request, err = http.NewRequest("POST", "/events", strings.NewReader(eventsBody))
+	var compressedEventsBody bytes.Buffer
+	gz := gzip.NewWriter(&compressedEventsBody)
+	_, err = gz.Write([]byte(eventsBody))
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+	gz.Close()
 	if err != nil {
 		t.Fatalf("Failed to create request: %v", err)
 	}
 
-	request.Header.Add("Content-type", "application/json")
+	request, err = http.NewRequest("POST", "/events", bytes.NewReader(compressedEventsBody.Bytes()))
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+
+	request.Header.Add("Content-Type", "application/json")
+	request.Header.Add("Content-Encoding", "gzip")
 	request.Header.Add("Authorization", "Bearer "+installResponse.Token)
 	responseRecorder = httptest.NewRecorder()
 	handler.ServeHTTP(responseRecorder, request)

@@ -94,6 +94,7 @@ func (eventsAPI EventsAPI) Handle(responseWriter http.ResponseWriter, request *h
 	gzipReader, err := gzip.NewReader(request.Body)
 	if err != nil {
 		log.Info().Err(err).Msg("Failed to parse gzip content")
+		responseWriter.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	defer func() {

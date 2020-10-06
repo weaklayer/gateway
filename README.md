@@ -1,4 +1,4 @@
-# Weaklayer Gateway
+# Weaklayer Gateway (Reference Implementation)
 
 Welcome to the Weaklayer Gateway (Reference Implementation) repository.
 Weaklayer is a software system for Browser Detection and Response - like Endpoint Detection and Response (EDR) but in the browser.

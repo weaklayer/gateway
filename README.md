@@ -1,5 +1,7 @@
 # Weaklayer Gateway (Reference Implementation)
 
+N.B. As of early 2021, this project is no longer under active development and has been removed from browser extension stores. However, the Weaklayer sensor and gateway still work well at the time of writing. The sensor just requires installing from source now.
+
 Welcome to the Weaklayer Gateway (Reference Implementation) repository.
 Weaklayer is a software system for Browser Detection and Response - like Endpoint Detection and Response (EDR) but in the browser.
 The Weaklayer Gateway (a server application) receives security data from Weaklayer Sensors (browser extensions).
